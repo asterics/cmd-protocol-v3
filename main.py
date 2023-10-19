@@ -17,15 +17,29 @@ def test_events(event_list):
     #event_list=[e1,e3,e4,e5,e2,e1,e2,e3,e4]
     event_list=[e1,e2,e2]
 
+
 def process_event(event_list):
+    to_be_fired=None
+    prev_trigger_state=None
+
     for event in event_list:
         for trigger_def in trigger_defs:
-            if trigger_def.state == "this":
-                prev_trigger_state=trigger_def.process(event)
-                break
+            trigger_state=trigger_def.process(event)
+
+            print(f"trigger_state={trigger_state}, prev_trigger_state={prev_trigger_state}")
+            if prev_trigger_state is None or prev_trigger_state == "cancelled":
+                if trigger_state == "fired":
+                    print(f"setting to_be_fired: {to_be_fired}")
+                    to_be_fired=trigger_def
+
+            prev_trigger_state=trigger_state
+
+    print(f"to_be_fired: {to_be_fired}")
+    if to_be_fired is not None :
+        to_be_fired.action.execute()
 
 def event_loop():
-    keyboard.wait()
+    keyboard.wait("esc")
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -33,8 +47,8 @@ if __name__ == '__main__':
     a2 = Action(name="right click")
     a3 = Action(name="middle click")
 
-    b1=Button(name="b1",source=1,mode="pressed",count=1, timeout=200,action=a1)
-    b2 = Button(name="b2",source=1, mode="pressed", count=2, timeout=200, action=a2)
+    b1=Button(name="b1",source=1,mode="pressed",count=1, timeout=500,action=a1)
+    b2 = Button(name="b2",source=1, mode="pressed", count=2, timeout=500, action=a2)
 
     p1=Pressure(source=1,mode="puff",threshold=560,edge="rising",action=a2)
     p2=Pressure(source=1,mode="puff",threshold=530,edge="rising",action=a3)
@@ -47,9 +61,9 @@ if __name__ == '__main__':
     print(p1)
     print(b_p2)
 
-    keyboard.add_hotkey("1", lambda: process_event([Event(source=1,trigger_type="button",value=1,timestamp=time.time())]))
-    keyboard.add_hotkey("2", lambda: process_event([Event(source=2, trigger_type="button", value=1, timestamp=time.time())]))
-    keyboard.add_hotkey("3", lambda: process_event([Event(source=3, trigger_type="button", value=1, timestamp=time.time())]))
+    keyboard.add_hotkey("1", lambda: process_event([Event(source=1,trigger_type="button",value=1,timestamp=time.time_ns()/1000000)]))
+    keyboard.add_hotkey("2", lambda: process_event([Event(source=2, trigger_type="button", value=1, timestamp=time.time_ns()/1000000)]))
+    keyboard.add_hotkey("3", lambda: process_event([Event(source=3, trigger_type="button", value=1, timestamp=time.time_ns()/1000000)]))
 
     keyboard.wait("esc")
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

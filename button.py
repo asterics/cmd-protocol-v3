@@ -15,13 +15,11 @@ class Button:
         self.state="this"
 
     def __str__(self):
-        return f"Button(name={self.name},source={self.source},mode={self.mode},count={self.count},debounce={self.debounce},timeout={self.timeout},next={self.next})"
+        return f"Button(name={self.name},source={self.source},mode={self.mode},count={self.count},debounce={self.debounce},timeout={self.timeout},next={self.next}(pressed_count={self.pressed_count}))"
 
     def process(self, event):
-        if(self.state=="fired"):
+        if self.state == "fired" or self.state == "cancelled":
             self.reset()
-            #self.state="ended"
-            return self.state
 
         if self.state == "next":
             if self.next is not None:
@@ -31,19 +29,23 @@ class Button:
                 self.prev_timestamp=event.timestamp
 
             if event.trigger_type == "button":
-                print(f"button(name={self.name}: processing event {event}")
-                time_diff=event.timestamp-self.prev_timestamp
+                time_diff = event.timestamp - self.prev_timestamp
+                print(f"{self} processing event {event}, time_diff={time_diff}")
 
                 if self.mode == "pressed" and event.value == 1 and time_diff <= self.timeout:
                     self.pressed_count+=1
 
                     if self.pressed_count==self.count:
-                        if not self.action == None:
-                            self.action.execute()
+                        if self.action is not None:
                             self.state="fired"
-                            return self.state
                         else:
                             self.state="next"
+
+                if time_diff > self.timeout:
+                    self.state = "cancelled"
+                    return self.state
+
+                return self.state
 
     def reset(self):
         self.pressed_count=0

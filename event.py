@@ -8,4 +8,4 @@ class Event:
         self.timestamp=timestamp
 
     def __str__(self):
-        return f"source={self.source},trigger_type={self.trigger_type},value={self.value},timestamp={self.timestamp}"
+        return f"Event(source={self.source},trigger_type={self.trigger_type},value={self.value},timestamp={self.timestamp})"
