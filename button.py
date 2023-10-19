@@ -1,4 +1,7 @@
 # This class represents the implementation of button press detections
+import time
+
+
 class Button:
     pressed_count=0
     prev_timestamp=-1
@@ -41,7 +44,7 @@ class Button:
                         else:
                             self.state="next"
 
-                if time_diff > self.timeout:
+                elif time_diff > self.timeout:
                     self.state = "cancelled"
                     return self.state
 
@@ -51,3 +54,24 @@ class Button:
         self.pressed_count=0
         self.prev_timestamp=-1
         self.state="this"
+
+    def update_timeout(self):
+        if self.state=="cancelled" or self.state=="fired":
+            return self.state
+
+        if self.state != "fired":
+            current_time=time.time_ns()/1000000
+            time_diff = current_time - self.prev_timestamp
+
+            if time_diff > self.timeout:
+                self.state="cancelled"
+                return self.state
+
+        return self.state
+
+    def execute(self):
+        if self.action is not None:
+            self.action.execute()
+
+
+
