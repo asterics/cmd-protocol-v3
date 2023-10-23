@@ -36,6 +36,7 @@ def process_events():
 
     # if there are new events, process them by the trigger_defs to update the states
     try:
+        #print(f"qsize: {event_queue.qsize()}")
         while event_queue.qsize() > 0:
             event=event_queue.get()
             for trigger_def in trigger_defs:
@@ -66,10 +67,15 @@ def add_to_event_queue(event):
     global event_queue
     event_queue.put(event)
 
-# waits for keyboard events in another thread
-def keyboard_wait():
-    threading.Thread(target=keyboard.wait,daemon=True).start()
+def keyboard_hook(key_event):
+    #print(key_event)
+    #print(f"{key_event.event_type},{key_event.name},{key_event.time}")
 
+    if key_event.name in ["1"]:
+        if key_event.event_type==keyboard.KEY_DOWN:
+            add_to_event_queue(Event(source=1, trigger_type="button", value=1, timestamp=time.time_ns() / 1000000))
+        elif key_event.event_type==keyboard.KEY_UP:
+            add_to_event_queue(Event(source=1, trigger_type="button", value=0, timestamp=time.time_ns() / 1000000))
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -78,25 +84,32 @@ if __name__ == '__main__':
     a3 = Action(name="triple-click action")
     a4 = Action(name="long press action")
 
-    b1=Button(name="b1",source=1,mode="pressed",count=1, timeout=500,action=a1)
-    b2 = Button(name="b2",source=1, mode="pressed", count=2, timeout=300, action=a2)
-    b3 = Button(name="b3",source=1, mode="pressed", count=3, timeout=300, action=a3)
-    b4 = Button(name="b4", source=1, mode="long_pressed", count=1, timeout=300, duration=200, action=a4)
+    b1=Button(name="b1",source=1,mode="pressed",count=1, timeout=400,action=a1)
+    b2 = Button(name="b2",source=1, mode="pressed", count=2, timeout=400, action=a2)
+    b3 = Button(name="b3",source=1, mode="pressed", count=3, timeout=400, action=a3)
+    b4 = Button(name="b4", source=1, mode="long_pressed", count=1, timeout=600, duration=100, action=a4)
 
     p1=Pressure(source=1,mode="puff",threshold=560,edge="rising",action=a2)
     p2=Pressure(source=1,mode="puff",threshold=530,edge="rising",action=a3)
     b_p2=Button(source=1,mode="pressed",count=2, debounce=30,next=p2)
 
     #trigger_defs=[b1,p1,b_p2]
-    trigger_defs=[b3,b2,b1,b4]
+    trigger_defs=[b4,b3,b2,b1]
+    #trigger_defs=[b3]
 
     print(b1)
     print(p1)
     print(b_p2)
 
-    keyboard.add_hotkey("1", lambda: add_to_event_queue(Event(source=1,trigger_type="button",value=1,timestamp=time.time_ns()/1000000)))
-    keyboard.add_hotkey("2", lambda: add_to_event_queue(Event(source=2, trigger_type="button", value=1, timestamp=time.time_ns()/1000000)))
-    keyboard.add_hotkey("3", lambda: add_to_event_queue(Event(source=3, trigger_type="button", value=1, timestamp=time.time_ns()/1000000)))
+    #keyboard.add_hotkey("1", lambda: add_to_event_queue(Event(source=1,trigger_type="button",value=1,timestamp=time.time_ns()/1000000)))
+    #keyboard.on_release_key("1", add_to_event_queue,args=[Event(source=1, trigger_type="button", value=0, timestamp=time.time_ns() / 1000000)],trigger_on_release=True)
 
-    keyboard_wait()
+    #keyboard.add_hotkey("2", lambda: add_to_event_queue(Event(source=2, trigger_type="button", value=1, timestamp=time.time_ns()/1000000)))
+    #keyboard.add_hotkey("2", lambda: add_to_event_queue(Event(source=2, trigger_type="button", value=0, timestamp=time.time_ns() / 1000000)),trigger_on_release=True)
+
+    #keyboard.add_hotkey("3", lambda: add_to_event_queue(Event(source=3, trigger_type="button", value=1, timestamp=time.time_ns()/1000000)))
+    #keyboard.add_hotkey("3", lambda: add_to_event_queue(Event(source=3, trigger_type="button", value=0, timestamp=time.time_ns() / 1000000)),trigger_on_release=True)
+
+    keyboard.hook(keyboard_hook)
+    threading.Thread(target=keyboard.wait,daemon=True).start()
     main_loop()
