@@ -120,13 +120,13 @@ class Pressure:
         self.debounce=debounce
         self.next=next
         self.action=action
-        self.state="this"
+        self.state=TriggerState.STARTED
 
     def __str__(self):
         return f"Pressure(source={self.source},mode={self.mode},threshold={self.threshold},{self.edge},debounce={self.debounce},next={self.next})"
 
     def process(self, event):
-        if self.state == "next":
+        if self.state == TriggerState.NEXT:
             if self.next is not None:
                 self.next.process(event)
         else:
@@ -136,6 +136,6 @@ class Pressure:
                     if not self.action == None:
                         self.action.execute()
                     else:
-                        self.state = "next"
+                        self.state = TriggerState.NEXT
 
 
