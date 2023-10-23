@@ -4,10 +4,8 @@ import keyboard
 import queue
 import threading
 
-from buttons import Button
-from buttons import TriggerState
+from triggers import Button, TriggerState, Pressure
 
-from pressure import Pressure
 from event import Event
 from action import Action
 
