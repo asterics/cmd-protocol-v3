@@ -81,7 +81,7 @@ class Button:
         if self.state=="cancelled" or self.state=="fired":
             return self.state
 
-        if self.state != "fired":
+        if self.state != "fired" and self.state != "next":
             current_time=time.time_ns()/1000000
             time_diff = current_time - self.t_start
 
