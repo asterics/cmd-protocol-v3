@@ -8,10 +8,17 @@ class TriggerState(Enum):
     CANCELLED="cancelled"
     FIRED="fired"
 
+RISING=1
+FLAT=0
+FALLING=-1
+
 class Trigger:
     state = TriggerState.STARTED
+    prev_event_value=0
+    edge=FLAT
     t_start=-1
-    prev_button_value=-1
+    t_start_rising=-1
+    t_start_falling=-1
 
     def __init__(self, name="", source=1, mode=None, timeout=200, next=None, action=None):
         self.name=name
@@ -25,24 +32,25 @@ class Trigger:
         return f"Trigger(name={self.name},source={self.source}, self.mode{self.mode},timeout={self.timeout},next={self.next})"
 
     def reset(self):
-        self.count_pressed = 0
+        #print(f"resetting Button(name={self.name})")
         self.t_start = -1
-        self.t_start_pressed = -1
-        self.t_start_released = -1
-        self.prev_button_value = -1
+        self.t_start_rising = -1
+        self.t_start_falling = -1
+        self.prev_event_value = 0
         self.state = TriggerState.STARTED
+        self.edge=FLAT
 
     def update_timeout(self):
-        if self.state==TriggerState.CANCELLED or self.state==TriggerState.FIRED:
+        if self.state==TriggerState.CANCELLED or self.state==TriggerState.FIRED or self.state==TriggerState.NEXT:
             return self.state
 
-        if self.state != TriggerState.FIRED and self.state != TriggerState.NEXT:
+        if self.state == TriggerState.STARTED:
             current_time=time.time_ns()/1000000
             time_diff = current_time - self.t_start
 
             if time_diff > self.timeout:
                 self.state=TriggerState.CANCELLED
-                return self.state
+                #print(f"Timeout for: {self.name}")
 
         return self.state
 
@@ -54,18 +62,35 @@ class Trigger:
             if self.next is not None:
                 self.next.process(event)
         else:
-            self.process_mode(event)
+            if self.t_start == -1:
+                self.t_start = event.timestamp
 
+            if self.update_timeout()==TriggerState.CANCELLED:
+                return self.state
+
+            #print(f"event: {event}, prev_event_value: {self.prev_event_value}")
+            self.edge=event.value-self.prev_event_value
+
+            if self.edge >= RISING:
+                self.t_start_rising=event.timestamp
+            elif self.edge <= FALLING:
+                self.t_start_falling=event.timestamp
+
+            #print(f"Before: {self} processing event {event}, delta_t_start={delta_t_start}, edge={self.edge}")
+
+            self.process_mode(event)
+            #print(f"After: {self} processing event {event}, delta_t_start={delta_t_start}, edge={self.edge}")
+
+        self.prev_event_value=event.value
         return self.state
 
     def execute(self):
+        #print(f"{self}")
         if self.action is not None:
             self.action.execute()
 
 class Button(Trigger):
     count_pressed=0
-    t_start_pressed=-1
-    t_start_released=-1
 
     def __init__(self, name="", source=1, mode="pressed", count=1, debounce="20", timeout=200, duration=200, next=None, action=None):
         super().__init__(name=name,source=source,mode=mode,timeout=timeout,next=next,action=action)
@@ -74,18 +99,11 @@ class Button(Trigger):
         self.duration=duration
 
     def __str__(self):
-        return f"Button(name={self.name},source={self.source},mode={self.mode},count={self.count},debounce={self.debounce},timeout={self.timeout},next={self.next}(pressed_count={self.count_pressed}))"
+        return f"Button(name={self.name},source={self.source},mode={self.mode},count={self.count},debounce={self.debounce},timeout={self.timeout},next={self.next}: pressed_count={self.count_pressed})"
 
     def process_mode(self, event):
         if event.trigger_type == "button":
-            if self.t_start == -1:
-                self.t_start = event.timestamp
-
-            time_diff = event.timestamp - self.t_start
-
-            print(f"{self} processing event {event}, time_diff={time_diff}")
-
-            if self.mode == "pressed" and event.value == 1 and time_diff <= self.timeout:
+            if self.mode == "pressed" and self.edge == FALLING:
                 self.count_pressed+=1
 
                 if self.count_pressed==self.count:
@@ -93,27 +111,26 @@ class Button(Trigger):
                         self.state=TriggerState.FIRED
                     else:
                         self.state=TriggerState.NEXT
-            elif self.mode == "long_pressed":
-                time_duration=event.timestamp-self.t_start_pressed
+            elif self.mode == "long_pressed" and self.edge == FALLING:
+                #print(f"t_start_falling {self.t_start_falling}, t_start_rising {self.t_start_rising}")
+                t_pressed=self.t_start_falling-self.t_start_rising
 
-                # button press started
-                if self.t_start_pressed == 0 and event.value == 1:
-                    self.t_start_pressed=event.timestamp
                 # long press successful
-                elif time_duration >= self.duration:
+                if t_pressed >= self.duration:
+                    self.t_start=-1
                     if self.action is not None:
                         self.state=TriggerState.FIRED
                     else:
                         self.state=TriggerState.NEXT
-                # button 0 event before duration reached --> long press cancelled
-                elif event.value == 0 and time_duration < self.duration:
+                # long press too short --> cancelled
+                else:
                     self.state = TriggerState.CANCELLED
-            elif time_diff > self.timeout:
-                self.state = TriggerState.CANCELLED
-                return self.state
 
-            return self.state
+        return self.state
 
+    def reset(self):
+        super().reset()
+        self.count_pressed=0
 
 # This is the trigger implementation for a pressure trigger type
 class Pressure(Trigger):
@@ -126,7 +143,7 @@ class Pressure(Trigger):
     def __str__(self):
         return f"Pressure(source={self.source},mode={self.mode},threshold={self.threshold},{self.edge},debounce={self.debounce},next={self.next})"
 
-    def process(self, event):
+    def process_mode(self, event):
         if self.state == TriggerState.NEXT:
             if self.next is not None:
                 self.next.process(event)
