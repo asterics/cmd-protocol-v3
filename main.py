@@ -4,7 +4,9 @@ import keyboard
 import queue
 import threading
 
-from button import Button
+from buttons import Button
+from buttons import TriggerState
+
 from pressure import Pressure
 from event import Event
 from action import Action
@@ -49,7 +51,7 @@ def process_events():
         trigger_state=trigger_def.update_timeout()
         #print(f"trigger_def: {trigger_def}, trigger_state={trigger_state}, prev_trigger_state={prev_trigger_state}")
 
-        if trigger_state=="fired" and (prev_trigger_state is None or prev_trigger_state == "cancelled"):
+        if trigger_state==TriggerState.FIRED and (prev_trigger_state is None or prev_trigger_state == TriggerState.CANCELLED):
             trigger_def.execute()
             fired=True
             break
@@ -64,7 +66,6 @@ def process_events():
 # adds keyboard events to the event queue
 def add_to_event_queue(event):
     global event_queue
-
     event_queue.put(event)
 
 # waits for keyboard events in another thread
@@ -74,20 +75,22 @@ def keyboard_wait():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    a1=Action(name="left click")
-    a2 = Action(name="middle click")
-    a3 = Action(name="right click")
+    a1 = Action(name="single-click action")
+    a2 = Action(name="double-click action")
+    a3 = Action(name="triple-click action")
+    a4 = Action(name="long press action")
 
     b1=Button(name="b1",source=1,mode="pressed",count=1, timeout=500,action=a1)
     b2 = Button(name="b2",source=1, mode="pressed", count=2, timeout=300, action=a2)
     b3 = Button(name="b3",source=1, mode="pressed", count=3, timeout=300, action=a3)
+    b4 = Button(name="b4", source=1, mode="long_pressed", count=1, timeout=300, duration=200, action=a4)
 
     p1=Pressure(source=1,mode="puff",threshold=560,edge="rising",action=a2)
     p2=Pressure(source=1,mode="puff",threshold=530,edge="rising",action=a3)
     b_p2=Button(source=1,mode="pressed",count=2, debounce=30,next=p2)
 
     #trigger_defs=[b1,p1,b_p2]
-    trigger_defs=[b3,b2,b1]
+    trigger_defs=[b3,b2,b1,b4]
 
     print(b1)
     print(p1)
