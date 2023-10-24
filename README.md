@@ -68,7 +68,7 @@ The trigger mappings must be grouped by trigger_type (e.g. button and source num
 
 #### Evaluation
 
-A button press is then propagated to all trigger mappings and the action is executed depending according to the following flowchart:
+A button press is then propagated to all trigger mappings and the action is executed according to the following flowchart:
 
 ```mermaid
   graph TD;
