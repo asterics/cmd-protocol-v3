@@ -1,8 +1,23 @@
 # cmd-protocol-v3
 
-Documentation and reference implementation of command protocol v3, which adds mapping between trigger events and actions
+Documentation and reference implementation of command protocol v3, which adds mapping between trigger events and actions.
 
-## Trigger type
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+## Run Program
+
+```bash
+python main.py
+```
+Use the keys <kbd>1</kbd> and <kbd>2</kbd> to simulate button presses.
+
+## Documentation
+
+### Trigger type
 
 A trigger type can be a button that can be triggered by several modalities:
 
@@ -14,7 +29,7 @@ A trigger type can be a button that can be triggered by several modalities:
 
 All triggers can have a timeout value, which resets the current state and starts evaluating a trigger type from the beginning.
 
-## Example Configuration
+### Example Configuration
 
 ```python
     a1 = Action(name="single-click action")
@@ -35,11 +50,11 @@ All triggers can have a timeout value, which resets the current state and starts
     b5 = Button(name="b5", source=1, mode="pressed", count=1, timeout=200,
                 next_trigger=Button(name="b5a", source=2, mode="pressed", count=1, timeout=200, action=a5)
 ```
-## Algorithm
+### Algorithm
 
 The trigger mappings must be grouped by trigger_type (e.g. button and source number) and then sorted by priority within that group.
 
-### Example
+#### Example
 
 1. Button 1, long press
 2. Button 1, triple-click
@@ -51,7 +66,7 @@ The trigger mappings must be grouped by trigger_type (e.g. button and source num
    trigger_defs=[b4,b3,b5,b2,b1]
 ```
 
-### Evaluation
+#### Evaluation
 
 A button press is then propagated to all trigger mappings and the action is executed depending according to the following flowchart:
 
