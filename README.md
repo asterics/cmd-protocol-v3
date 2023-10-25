@@ -29,6 +29,16 @@ A trigger type can be a button that can be triggered by several modalities:
 
 All triggers can have a timeout value, which resets the current state and starts evaluating a trigger type from the beginning.
 
+### Trigger States
+
+A Trigger type is implemented as a class and maintains it's own state. 
+The states can be one of the following:
+
+* STARTED: Trigger object waits for key input to be evaluated
+* CANCELLED: Input evaluation went into timeout
+* FIRED: The Trigger object has had a valid combination of the required key inputs within the defined timeout time span.
+* NEXT: The Trigger object has had a valid combination of the required key inputs and is cascaded with a subsequent Trigger object which does further processing of key inputs now.
+
 ### Example Configuration
 
 ```python
