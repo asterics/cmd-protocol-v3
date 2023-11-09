@@ -17,15 +17,49 @@ Use the keys <kbd>1</kbd> and <kbd>2</kbd> to simulate button presses.
 
 ## Documentation
 
-### Trigger type
+### Class diagram
 
-A trigger type can be a button that can be triggered by several modalities:
+```mermaid
+---
+title: cmd protocol class diagram
+---
+classDiagram
+    TriggerType <|-- Button
+    TriggerType <|-- Pressure
+    TriggerType : +TriggerState state
+    TriggerType : +Action action
+    TriggerType : +TriggerType next
+    TriggerType: +process()
+
+    TriggerType "1" --> "0..1" TriggerType
+
+    class Button{
+    }
+    class Pressure{
+    }
+
+    Action <|-- MouseAction
+    Action <|-- IRAction
+    Action "1" --> "0..1" Action
+
+    class Action{
+        +execute()
+    }
+    class MouseAction{
+    }
+    class IRAction{
+    }
+```
+
+### TriggerType Button
+
+A button trigger type can be triggered by several modalities:
 
 1. single-click
 2. double-click
 3. triple-click
 4. long-press
-5. combination of triggers 1-4 of the same button or another one.
+5. (combination of triggers 1-4 of the same button or another one.)
 
 All triggers can have a timeout value, which resets the current state and starts evaluating a trigger type from the beginning.
 
