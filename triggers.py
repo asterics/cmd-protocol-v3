@@ -49,9 +49,11 @@ class Trigger:
 
         if self.state==TriggerState.NEXT:
             if self.next_trigger is not None:
-                self.next_trigger.update_timeout()
-                #if self.next_trigger.get_state() == TriggerState.CANCELLED:
-                #    self.state = TriggerState.CANCELLED
+                next_state=self.next_trigger.update_timeout()
+                print(f"next_state: {next_state}")
+                if next_state == TriggerState.CANCELLED or next_state == TriggerState.FIRED:
+                    self.state = next_state
+                    print(f"this_state: {self.state}")
 
         if self.state == TriggerState.STARTED:
             current_time=time.time_ns()/1000000
