@@ -126,3 +126,16 @@ A button press is then propagated to all trigger mappings and the action is exec
       B2 -- Yes --> A2[Execute Action A2]
       B2 -- No --> A1[Execute Action A1]
 ```
+
+### Cases to be supported
+
+* Button 1 Press --> Immediate action
+* Button 1 Release --> Immediate action
+* Combined execute either A or B (internally pause normal mouse action):
+  * A: Strong Sip + Button 1 Press
+  * B: Button Press 1
+* Button 1 Long Press (after duration) --> action
+* Button 2 Press --> Immediate action
+
+* Detection with debouncing and tremor filters
+* Test cases with morse code logic
