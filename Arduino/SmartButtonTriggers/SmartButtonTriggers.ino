@@ -27,7 +27,7 @@ bool isPressedHandler(SmartButton *button)
 
 void processCommand (String cmd) {
   if (cmd == "ti")
-    createTrigger(getParameter("source"),getParameter("condition"),getParameter("action"));
+    createTrigger(getParameter("id"),getParameter("condition"),getParameter("action"));
 
   if (cmd == "free") {
     Serial.print("freeHeap="); Serial.println(getFreeHeap());
@@ -50,12 +50,12 @@ void setup()
 
   Serial.println("Welcome to AT-command based SmartButton testing!");
   Serial.println("examples:");
-  Serial.println("at ti source=Button1 hold,action=B1held!");
-  Serial.println("at ti source=Button2 click1,action=B2clicked!");
-  Serial.println("at ti source=Button3 pressed,action=B3pressed!");
-  Serial.println("at ti source=Button3 released,action=B3released!");
-  Serial.println("at ti source=Button2 click2,action=B2doubleClicked!");
-  Serial.println("at ti source=Button1 click1,action=B2dbl->B1clicked!,condition=Button2 click2");
+  Serial.println("at ti id=Button1 hold,action=B1held!");
+  Serial.println("at ti id=Button2 click1,action=B2clicked!");
+  Serial.println("at ti id=Button3 pressed,action=B3pressed!");
+  Serial.println("at ti id=Button3 released,action=B3released!");
+  Serial.println("at ti id=Button2 click2,action=B2doubleClicked!");
+  Serial.println("at ti id=Button1 click1,action=B2dbl->B1clicked!,condition=Button2 click2");
   Serial.println("at free");
   Serial.println("at clear\n");
 }

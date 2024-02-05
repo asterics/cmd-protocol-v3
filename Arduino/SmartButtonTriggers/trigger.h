@@ -4,6 +4,7 @@
 
 #define MAX_SMARTBUTTONS 8
 #define MAX_ACTIONSTRING_LEN 20
+#define CONDITION_TIMEOUT 1000
 
 typedef struct s_buttoncontext
 {
@@ -13,7 +14,7 @@ typedef struct s_buttoncontext
   char action[MAX_ACTIONSTRING_LEN];  // the action to be triggerd, just a placeholder string
 } t_buttoncontext;
 
-uint16_t getTriggerID(String source);
-uint16_t getEventID(String source);
-void createTrigger(String source, String condition, String action);
+uint16_t getTriggerID(String id);
+uint16_t getEventID(String id);
+void createTrigger(String id, String condition, String action);
 void freeTriggers();
