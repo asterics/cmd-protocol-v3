@@ -19,10 +19,16 @@ int numParams() {
 String getParameter(String parName) {
   int parNameLen;
   for (int i = 0; parList[i] != ""; i++) {
-    if (parList[i].startsWith(parName)) {
+    String pn=parList[i];
+    pn.toLowerCase();
+    if (pn.startsWith(parName)) {
       parNameLen = parName.length();
-      if ((parList[i].charAt(parNameLen) == '=') || (parList[i].charAt(parNameLen) == ' ')) {
-        return (parList[i].substring(parNameLen + 1));
+      String parValue = parList[i].substring(parNameLen);
+      parValue.trim();
+      if (parValue.startsWith("=")) {
+        parValue=parValue.substring(1);
+        parValue.trim();
+        return (parValue);      
       }
     }
   }
@@ -44,10 +50,11 @@ void parseCommand (char * cmdstr)
 
   int s1 = atCommand.indexOf(' ');
   int s2 = atCommand.indexOf(',', s1 + 1);
-  parList[actpar++] = atCommand.substring(0, s1);
-
+  parList[actpar] = atCommand.substring(0, s1);
+  parList[actpar++].trim();
   while ((s1 > -1) && (actpar < MAX_PARAMETERS - 1)) {
-    parList[actpar++] = atCommand.substring(s1 + 1, s2);
+    parList[actpar] = atCommand.substring(s1 + 1, s2);
+    parList[actpar++].trim();
     atCommand = atCommand.substring(s1 + 1);
     s1 = atCommand.indexOf(',');
     s2 = atCommand.indexOf(',', s1 + 1);

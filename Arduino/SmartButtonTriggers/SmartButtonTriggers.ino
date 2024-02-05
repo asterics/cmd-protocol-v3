@@ -26,6 +26,7 @@ bool isPressedHandler(SmartButton *button)
 }
 
 void processCommand (String cmd) {
+  cmd.toLowerCase();
   if (cmd == "ti")
     createTrigger(getParameter("id"),getParameter("condition"),getParameter("action"));
 

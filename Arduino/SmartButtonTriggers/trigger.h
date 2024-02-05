@@ -4,7 +4,7 @@
 
 #define MAX_SMARTBUTTONS 8
 #define MAX_ACTIONSTRING_LEN 20
-#define CONDITION_TIMEOUT 1000
+#define CONDITION_TIMEOUT 3000
 
 typedef struct s_buttoncontext
 {
