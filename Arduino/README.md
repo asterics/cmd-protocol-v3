@@ -13,12 +13,12 @@ Build and run the sketch "SmartButtonTriggers.ino"
 Connect up to 3 switches, and try the AT commands via Serial Window:
 
 <pre>
- at ti source=Button1 hold,action=B1held!
- at ti source=Button2 click1,action=B2clicked!
- at ti source=Button3 pressed,action=B3pressed!
- at ti source=Button3 released,action=B3released!
- at ti source=Button2 click2,action=B2doubleClicked!
- at ti source=Button1 click1,action=B2dbl-B1clicked!,condition=Button2 click2
+ at ti id=Button1 hold,action=B1held!
+ at ti id=Button2 click1,action=B2clicked!
+ at ti id=Button3 pressed,action=B3pressed!
+ at ti id=Button3 released,action=B3released!
+ at ti id=Button2 click2,action=B2doubleClicked!
+ at ti id=Button1 click1,condition=Button2 click2,action=B2dbl-B1clicked!
  at free
  at clear\n
 </pre>
