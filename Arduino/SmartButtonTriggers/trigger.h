@@ -4,17 +4,18 @@
 
 #define MAX_SMARTBUTTONS 8
 #define MAX_ACTIONSTRING_LEN 20
-#define CONDITION_TIMEOUT 3000
+#define CONDITION_TIMEOUT 800
 
 typedef struct s_buttoncontext
 {
-  uint16_t triggerID; // identifies the trigger source (e.g. Button1, xAxisUp, PressureStrongSip etc.)
-  uint16_t eventID;   // identifies the event (e.g. pressed, released, hold, click3) - click count is stored in higher 8 bit!
-  uint32_t condition;                 // pre-trigger-condition ID  (triggerID) | (eventID<<16))
-  char action[MAX_ACTIONSTRING_LEN];  // the action to be triggerd, just a placeholder string
+  uint32_t triggerID; // identifies the trigger source (e.g. Button1, xAxisUp, PressureStrongSip etc.)  and event
+                      // event (e.g. pressed, released, hold, click) sotred in bit 16-23, click count is stored in bit 24-31
+  uint32_t condition;   // pre-trigger (condition) ID  
+  uint32_t conditionTimeout;
+  uint8_t blocked;
+  char action[MAX_ACTIONSTRING_LEN];  // the action to be triggered, just a placeholder string
 } t_buttoncontext;
 
-uint16_t getTriggerID(String id);
-uint16_t getEventID(String id);
+uint32_t getTriggerID(String id);
 void createTrigger(String id, String condition, String action);
 void freeTriggers();

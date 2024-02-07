@@ -66,6 +66,7 @@ void loop()
   if (Serial.available())
     parseByte(Serial.read());      // parse serial for AT commands, calls back processCommand()
   SmartButton::service();          // Asynchronous service routine, should be called periodically
+  updateTimeouts();
 }
 
 #if defined(ARDUINO_AVR_MICRO)
