@@ -50,7 +50,7 @@ void eventCallback(SmartButton *button, SmartButton::Event event, int clickCount
       Serial.println(context->action);
     }
     else Serial.println("  triggered, but pre-condition not met");
-    lastCondition = context->triggerID | (context->eventID << 16); // update condition ID to current one
+    lastCondition = (uint32_t) context->triggerID | ((uint32_t)context->eventID << 16); // update condition ID to current one
     conditionTimeout = millis();
   }
 }
@@ -84,7 +84,7 @@ void createTrigger(String id, String condition, String action) {
 
     if (condition.length() > 0) {
       Serial.print("  with pretrigger condition "); Serial.print(condition);
-      actContext->condition = getTriggerID(condition) | (getEventID(condition) << 16);
+      actContext->condition = (uint32_t)getTriggerID(condition) | ((uint32_t)getEventID(condition) << 16);
     } else actContext->condition = 0;
     Serial.println();
 
