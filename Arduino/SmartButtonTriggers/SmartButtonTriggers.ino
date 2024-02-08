@@ -16,8 +16,17 @@ using namespace smartbutton;
 bool isPressedHandler(SmartButton *button)
 {
   int value = 0;
-  int triggerID = ((t_buttoncontext *) button->getContext())->triggerID;
+  t_buttoncontext * context = (t_buttoncontext *) button->getContext();
+  int triggerID = context->triggerID;
 
+  if (context->delayActionTimeout) {
+    if (millis() > context->delayActionTimeout) { // reset last condition in case of timeout
+      Serial.print("delayed action: ");Serial.println(context->action);
+      removeBlock(triggerID);
+    }
+  }
+
+  triggerID &= 255;
   // Note: currently only 3 GPIO input triggers implemented!
   if ((triggerID >= 1) && (triggerID <= 3))
     value = !digitalRead(mapButtonToPin[triggerID - 1]);
@@ -37,6 +46,10 @@ void processCommand (String cmd) {
   if (cmd == "clear") {
     freeTriggers();
     Serial.print("buttons cleared, freeHeap="); Serial.println(getFreeHeap());
+  }
+
+  if (cmd == "debug") {
+    toggleDebugOutput();
   }
 }
 
@@ -59,6 +72,7 @@ void setup()
   Serial.println("at ti id=Button1 click1,action=B2dbl->B1clicked!,condition=Button2 click2");
   Serial.println("at free");
   Serial.println("at clear\n");
+  Serial.println("at debug\n");
 }
 
 void loop()
@@ -66,7 +80,7 @@ void loop()
   if (Serial.available())
     parseByte(Serial.read());      // parse serial for AT commands, calls back processCommand()
   SmartButton::service();          // Asynchronous service routine, should be called periodically
-  updateTimeouts();
+  updateBlocks();
 }
 
 #if defined(ARDUINO_AVR_MICRO)
