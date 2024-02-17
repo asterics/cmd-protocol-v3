@@ -1,26 +1,26 @@
 # cmd-protocol-v3 - Alternative Arduino implementation
-Alternative version of a new command protocol, can be used with FABI / FlipMouse via AT-commands.
+Alternative version of a new command protocol, can be used with FABIv3 / FlipMouse via AT-commands.
+The code is based upon the SmartButton Arduiono Library by Marcin Borowicz: https://github.com/marcinbor85/SmartButton
+
 
 ## Prerequisites
-Install / clone the SmartButton Library from https://github.com/ChrisVeigl/SmartButton
-(a small patch was applied in this fork which was needed for compatibility with the Arduino Nano 2040 Connect.)
-You can also install the original SmartButton library via the Arduino Library Manager and then apply the patch manually.
+  * for Compile/Build:Arduino with RP2040 board support (e.g. Arduino Pico Core https://github.com/earlephilhower/arduino-pico),
+  * for testing: 3 Buttons connected to GPIO 17, 20, 28 (active low).
 
 
 ## Documentation
-Should work with current FABI (Arduino Micro) or FlipMouse v3 (Arduino Nano 2040 Connect).
+Should work with FABI v3 (RP Pico W) or FlipMouse v3 (Arduino Nano 2040 Connect).
 Build and run the sketch "SmartButtonTriggers.ino"
-Connect up to 3 switches, and try the AT commands via Serial Window:
+Use Button 1, 2 and 3, and try the AT commands as explained in the Serial Window
 
 <pre>
- at ti id=Button1 hold,action=B1held!
- at ti id=Button2 click1,action=B2clicked!
- at ti id=Button3 pressed,action=B3pressed!
- at ti id=Button3 released,action=B3released!
- at ti id=Button2 click2,action=B2doubleClicked!
- at ti id=Button1 click1,condition=Button2 click2,action=B2dbl-B1clicked!
- at free
- at clear\n
+  at ti id=Button1 pressed,action=B1pressed
+  at ti id=Button2 pressed,action=B2pressed
+  at ti id=Button3 pressed,action=B3pressed
+  at ti id=Button2 pressed->Button1 pressed,action=B2p->B1p
+  at ti id=Button3 released,action=B3released
+  at ti id=Button3 click1,action=B3click
+  at ti id=Button3 click2,action=B3doubleClick
 </pre>
 
 
