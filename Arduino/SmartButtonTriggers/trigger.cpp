@@ -2,94 +2,120 @@
     trigger.cpp
 */
 
-#include <SmartButton.h>
 #include "trigger.h"
 
 using namespace smartbutton;
 
 extern bool isPressedHandler(SmartButton *button);   // implements all isPressedHandlers for different trigger types!
+uint8_t debugOutput=0;
+char stringBuf[ACTIONSTRING_BUFLEN]; 
+int stringBufIndex=0;
 
-SmartButton * buttons[MAX_SMARTBUTTONS] = {0};
-int numButtons = 0;
-
-uint16_t getTriggerID(String id) {
-  int tid = 0;
-  if (id.startsWith("Button"))
-    tid = id.substring(6).toInt();
-  return (tid);
-}
-
-uint16_t getEventID(String id) {
+uint32_t getTriggerID(String id, int * actTriggerIndex) {
+  uint16_t tid = 0;
   uint16_t eid = 0;
-  if (id.indexOf("pressed") > -1) eid = (uint16_t) SmartButton::Event::PRESSED;
-  else if (id.indexOf("released") > -1) eid = (uint16_t)SmartButton::Event::RELEASED;
-  else if (id.indexOf("hold_repeat") > -1) eid = (uint16_t)SmartButton::Event::HOLD_REPEAT;
-  else if (id.indexOf("hold") > -1) eid = (uint16_t)SmartButton::Event::HOLD;
-  else if (id.indexOf("long_hold_repeat") > -1) eid = (uint16_t)SmartButton::Event::LONG_HOLD_REPEAT;
-  else if (id.indexOf("long_hold") > -1) eid = (uint16_t)SmartButton::Event::LONG_HOLD;
-  else if (id.indexOf("click") > -1) {
+  String actid = id.substring(*actTriggerIndex);
+  int nextTriggerIndex = actid.indexOf("->");
+  if (nextTriggerIndex >0) *actTriggerIndex=nextTriggerIndex+2;
+  else *actTriggerIndex=-1;
+  
+  if (actid.startsWith("Button"))
+    tid = actid.substring(6).toInt();
+  
+  if (actid.indexOf("pressed") > -1) eid = (uint16_t) SmartButton::Event::PRESSED;
+  else if (actid.indexOf("released") > -1) eid = (uint16_t)SmartButton::Event::RELEASED;
+  else if (actid.indexOf("hold_repeat") > -1) eid = (uint16_t)SmartButton::Event::HOLD_REPEAT;
+  else if (actid.indexOf("hold") > -1) eid = (uint16_t)SmartButton::Event::HOLD;
+  else if (actid.indexOf("long_hold_repeat") > -1) eid = (uint16_t)SmartButton::Event::LONG_HOLD_REPEAT;
+  else if (actid.indexOf("long_hold") > -1) eid = (uint16_t)SmartButton::Event::LONG_HOLD;
+  else if (actid.indexOf("click") > -1) {
     eid = (uint16_t)SmartButton::Event::CLICK;
-    eid |= (id.substring(id.indexOf("click") + 5).toInt()) << 8;  // store click number in higher 8 bit!
+    eid |= (actid.substring(actid.indexOf("click") + 5).toInt()) << 8;  // store click number in higher 8 bit!
   }
-  return (eid);
+
+  return ((uint32_t)tid | ((uint32_t)eid <<16));
 }
+
 
 void eventCallback(SmartButton *button, SmartButton::Event event, int clickCounter)
 {
-  static uint32_t lastCondition = 0;
-  static uint32_t conditionTimeout = 0;
-  uint16_t thisEventID = (uint16_t) event | (clickCounter << 8);
-  t_buttoncontext * context = (t_buttoncontext *) button->getContext();
+  uint16_t thisEventID = (event==SmartButton::Event::CLICK) ? (uint16_t) event | (clickCounter << 8) : (uint16_t) event;
+  uint16_t triggerEventID = (button->triggerID) >> 16;    // extract eventID from triggerID
+  if (thisEventID == triggerEventID)  {
 
-  if (millis() - conditionTimeout > CONDITION_TIMEOUT)  // reset last condition in case of timeout
-    lastCondition = 0;
-
-  if (thisEventID == context->eventID) {
-    if ((context->condition == 0) || (context->condition == lastCondition)) {
-      Serial.print("  triggered action: ");
-      Serial.println(context->action);
-    }
-    else Serial.println("  triggered, but pre-condition not met");
-    lastCondition = (uint32_t) context->triggerID | ((uint32_t)context->eventID << 16); // update condition ID to current one
-    conditionTimeout = millis();
-  }
-}
-
-
-void freeTriggers() {
-  for (int i = 0; i < numButtons; i++) {
-    free (buttons[i]->getContext());
-    buttons[i]->end();
-    delete (buttons[i]);
-  }
-  numButtons = 0;
-}
-
-void createTrigger(String id, String condition, String action) {
-
-  uint16_t triggerID = getTriggerID(id);
-  uint16_t eventID = getEventID(id);
-
-  if (numButtons < MAX_SMARTBUTTONS) {
-    Serial.print("creating new trigger for "); Serial.print(id);
-    t_buttoncontext * actContext =  (t_buttoncontext *) malloc (sizeof(t_buttoncontext));
-    if (!actContext) {
-      Serial.println("  MALLOC ERROR!");
+    if (button->blockedBy != 0) {
+      if (debugOutput) Serial.println("action blocked"); 
       return;
     }
-    SmartButton * button = new SmartButton(isPressedHandler);
-    actContext->triggerID = triggerID;
-    actContext->eventID = eventID;
-    action.toCharArray(actContext->action, MAX_ACTIONSTRING_LEN);
-
-    if (condition.length() > 0) {
-      Serial.print("  with pretrigger condition "); Serial.print(condition);
-      actContext->condition = (uint32_t)getTriggerID(condition) | ((uint32_t)getEventID(condition) << 16);
-    } else actContext->condition = 0;
-    Serial.println();
-
-    buttons[numButtons] = button;
-    numButtons++;
-    button->begin(eventCallback, actContext);
+    
+    if (button->child != NULL) {
+       SmartButton::blockChilds(button);
+       button->waitForChildsTimeout=millis()+DEFAULT_CHILDS_TIMEOUT;
+    }
+    if ((debugOutput) && (button->waitForChildsTimeout)) {
+      if (debugOutput) Serial.println("action delayed");
+    }
+    if (!button->waitForChildsTimeout) {
+      if (debugOutput) Serial.print("action triggered: "); 
+      Serial.println(button->action);
+      if (button->blockToRemove) {
+        SmartButton::addToRemoveList(button->blockToRemove);
+        button->blockToRemove=0;     
+      }
+    }
   }
+}
+
+void freeTriggers() {
+  SmartButton::freeAll(NULL);
+  stringBufIndex=0;
+}
+
+SmartButton * createTrigger(SmartButton * parent, String id, String action) {
+  SmartButton * button = NULL;
+  SmartButton * root = NULL;
+  uint32_t triggerID;
+  int nextTriggerIndex=0;
+  triggerID = getTriggerID(id,&nextTriggerIndex);
+
+  // Serial.print("trigger ID: "); Serial.println(triggerID);
+  if (triggerID<=0) return (NULL);
+  
+  if (parent == NULL)  {
+    if (debugOutput) Serial.print("create trigger: ");
+    root=_smartButtons;
+  } else {
+    if (debugOutput) Serial.print ("  create child trigger: ");
+    root=parent->child;
+  }
+  if (debugOutput) Serial.println(triggerID);
+
+  button = SmartButton::findTrigger(root,triggerID);
+  if (!button) {
+    button = new SmartButton(isPressedHandler);
+    if (button) {
+      button->triggerID=triggerID;
+      action.toCharArray(&stringBuf[stringBufIndex], 20);  // TBD: check length!
+      button->action=&stringBuf[stringBufIndex];
+      stringBufIndex+=(action.length()+1);
+      button->begin(eventCallback, parent);
+    } else Serial.println("trigger memory full!");
+  } else {
+    if (debugOutput) Serial.println("  found existing trigger");
+    if (nextTriggerIndex <= 0) {
+      if (debugOutput) Serial.println("  replacing action");
+      action.toCharArray(&stringBuf[stringBufIndex], 20);  // TBD: check length!
+      button->action=&stringBuf[stringBufIndex];
+      stringBufIndex+=(action.length()+1);
+    }
+  }
+
+  if (nextTriggerIndex > 0) button->child = createTrigger (button, id.substring(nextTriggerIndex), action);   
+  return (button);
+}
+
+void toggleDebugOutput() {
+  debugOutput=!debugOutput;
+  Serial.print("Debug Output is now ");
+  debugOutput ? Serial.println("on") : Serial.println("off");
 }
