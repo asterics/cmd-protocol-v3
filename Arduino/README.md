@@ -1,6 +1,6 @@
 # cmd-protocol-v3 - Alternative Arduino implementation
 Alternative version of a new command protocol, can be used with FABIv3 / FlipMouse via AT-commands.
-The code is based upon the SmartButton Arduiono Library by Marcin Borowicz: https://github.com/marcinbor85/SmartButton
+The code is based upon the SmartButton Arduino Library by Marcin Borowicz: https://github.com/marcinbor85/SmartButton
 
 
 ## Prerequisites
